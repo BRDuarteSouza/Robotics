@@ -4,9 +4,8 @@
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusCLient
 from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.constants import Endian
-from pymodbus.compat import iteritems
-from collections import OrderedDict
 from time import sleep
 import mel_debug as debug
 
@@ -25,7 +24,7 @@ def main():
         return
     while True:
 
-        
+
         payload = client.read_holding_registers(0,1, unit = ID)
         # print(payload.bits)
 
@@ -37,11 +36,14 @@ def main():
         payload = client.read_holding_registers(1,1, unit=ID)
 
         decoder = BinaryPayloadDecoder.fromRegisters(payload.registers,
-                                                        byteorder = Endian.Little,
-                                                        wordorder = Endian.Big)
+                                                        byteorder = Endian.Big,
+                                                        wordorder = Endian.Little)
         port_1 = decoder.decode_bits()
 
-        debug.info("Port_0: {} \n Port_1: {}".format(port_0,port_1))
+        debug.info("Input 0: {}".format(port_0))
+        q_0 = port_0[0]
+        debug.debug(q_0)
+        debug.info("Input 1: {}".format(port_1))
 
         # decoded = OrderedDict([
         # ('Port_0', decoder.decode_bits()),
@@ -75,6 +77,35 @@ def main():
         sleep(10)
 
 
+        builder = BinaryPayloadBuilder(byteorder = Endian.Big,
+                                        wordorder = Endian.Little)
+
+        builder.add_bits([1,1,0,0,0,0,1,0])
+
+        payload = builder.to_registers()
+
+        debug.debug(payload)
+
+
+        client.write_registers(4,payload,unit = ID)
+
+
+
+
+
+
+
+        # builder = BinaryPayloadBuilder(byteorder = Endian.Big,
+        # wordorder = Endian.Little)
+        #
+        # builder.add_bits([1,0,0,1,0,0,1,1])
+        # debug.debug("Payload sent: {}".format(builder.to_registers()))
+        # casa = builder.to_registers()
+        #
+        #
+        # client.write_registers(5, casa, unit = 2)
+        #
+        # sleep(5)
 
 
 if __name__ == '__main__':
